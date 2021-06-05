@@ -65,7 +65,7 @@ type Function interface {
 	Body(def func(sb Statement)) Function
 }
 
-// Method buildr for method
+// Method builder for method
 type Method interface {
 	Function
 	Receiver(def string) Method
