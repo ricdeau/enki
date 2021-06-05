@@ -9,6 +9,7 @@ type primitiveBuilder struct {
 	err   error
 }
 
+// NewPrimitive creates new primitive builder
 func NewPrimitive() *primitiveBuilder {
 	return &primitiveBuilder{inner: &strings.Builder{}}
 }

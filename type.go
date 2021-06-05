@@ -8,6 +8,7 @@ type typeBuilder struct {
 	methods Methods
 }
 
+// NewType creates new type builder
 func NewType() *typeBuilder {
 	return &typeBuilder{functionBuilder: NewFunction()}
 }

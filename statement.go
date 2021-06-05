@@ -11,6 +11,7 @@ type statementBuilder struct {
 	*primitiveBuilder
 }
 
+// NewStatement creates new statement builder
 func NewStatement() *statementBuilder {
 	return &statementBuilder{NewPrimitive()}
 }

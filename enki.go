@@ -5,6 +5,7 @@ import (
 	"io"
 )
 
+// Names for primitive types
 const (
 	Int   = "int"
 	Int8  = "int8"
@@ -70,7 +71,10 @@ type Method interface {
 	Receiver(def string) Method
 }
 
+// MethodDef method or function definition constructor
 type MethodDef func(FunctionDef)
+
+// Methods methods in block
 type Methods []MethodDef
 
 // Type builder for types and interfaces

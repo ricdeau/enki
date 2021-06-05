@@ -16,6 +16,7 @@ type fileBuilder struct {
 	imports          []string
 }
 
+// NewFile creates new file builder
 func NewFile() *fileBuilder {
 	return &fileBuilder{typeBuilder: NewType()}
 }

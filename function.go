@@ -13,6 +13,7 @@ type functionBuilder struct {
 	body     func(def Statement)
 }
 
+// NewFunction creates new function builder
 func NewFunction() *functionBuilder {
 	return &functionBuilder{statementBuilder: NewStatement()}
 }
