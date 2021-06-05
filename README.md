@@ -2,6 +2,7 @@
 
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
 [![Go Reference](https://pkg.go.dev/badge/github.com/ricdeau/enki.svg)](https://pkg.go.dev/github.com/ricdeau/enki)
+[![Build Status](https://travis-ci.org/ricdeau/enki.svg?branch=master)](https://travis-ci.org/github/ricdeau/enki)
 [![codecov](https://codecov.io/gh/ricdeau/enki/branch/master/graph/badge.svg?token=R1SRKIVD5Z)](https://codecov.io/gh/ricdeau/enki)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ricdeau/enki)](https://goreportcard.com/report/github.com/ricdeau/enki)
 
