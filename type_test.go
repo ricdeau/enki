@@ -7,6 +7,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestNewType(t *testing.T) {
+	s := NewType()
+	require.NotNil(t, s.inner)
+	require.NoError(t, s.err)
+}
+
 func Test_typeBuilder_String(t *testing.T) {
 	tests := []struct {
 		name string

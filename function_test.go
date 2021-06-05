@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewFunction(t *testing.T) {
+func TestFunction(t *testing.T) {
 	type args struct {
 		name     string
 		receiver string

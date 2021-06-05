@@ -2,7 +2,16 @@ package enki
 
 import (
 	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/require"
 )
+
+func TestNewFunction(t *testing.T) {
+	s := NewFunction()
+	require.NotNil(t, s.inner)
+	require.NoError(t, s.err)
+}
 
 type functionBuilder struct {
 	*statementBuilder

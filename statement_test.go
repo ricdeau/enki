@@ -7,6 +7,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestNewStatement(t *testing.T) {
+	s := NewStatement()
+	require.NotNil(t, s.inner)
+	require.NoError(t, s.err)
+}
+
 func Test_statementBuilder_Line(t *testing.T) {
 	tests := []struct {
 		name    string

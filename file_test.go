@@ -6,6 +6,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestNewFile(t *testing.T) {
+	s := NewFile()
+	require.NotNil(t, s.inner)
+	require.NoError(t, s.err)
+}
+
 func Test_fileBuilder_WriteNew(t *testing.T) {
 	f := NewFile()
 	f.Package("enki")
