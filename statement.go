@@ -7,39 +7,62 @@ import (
 	"strings"
 )
 
-type statementBuilder struct {
+// Statement builder, that can build any statement.
+type Statement interface {
+	Primitive
+	Block
+	Print(s string, args ...interface{}) Statement
+	Line(s string, args ...interface{}) Statement
+}
+
+type statement struct {
 	*primitiveBuilder
 }
 
-// NewStatement creates new statement builder
-func NewStatement() *statementBuilder {
-	return &statementBuilder{NewPrimitive()}
+// Stmt creates new statement builder.
+func Stmt() *statement {
+	return &statement{NewPrimitive()}
 }
 
-func (sb *statementBuilder) Line(s string, args ...interface{}) {
-	if sb.Err() != nil {
-		return
+func Field(line string, args ...interface{}) Statement {
+	return Stmt().Line(line, args...)
+}
+
+func (s *statement) Line(line string, args ...interface{}) Statement {
+	s.Print(line, args...).NewLine()
+	return s
+}
+
+func (s *statement) Print(line string, args ...interface{}) Statement {
+	if s.err != nil {
+		return s
 	}
+
 	r := regexp.MustCompile(`@\d+`)
-	result := r.ReplaceAllStringFunc(s, func(sub string) string {
-		if sb.Err() != nil {
+	result := r.ReplaceAllStringFunc(line, func(sub string) string {
+		if s.err != nil {
 			return sub
 		}
 		d, err := strconv.Atoi(strings.TrimPrefix(sub, "@"))
 		if err != nil {
-			sb.err = err
+			s.err = err
 			return sub
 		}
 		if len(args) < d {
-			sb.err = fmt.Errorf("%s: found %s substitution parameter, but only %d arguments has been provided", s, sub, len(args))
+			s.err = fmt.Errorf("%s: found %s substitution parameter, but only %d arguments has been provided", line, sub, len(args))
 			return sub
 		}
 		return fmt.Sprint(args[d-1])
 	})
-	_, err := sb.inner.WriteString(result)
+	_, err := s.inner.WriteString(result)
 	if err != nil {
-		sb.err = err
-		return
+		s.err = err
+		return s
 	}
-	sb.NewLine()
+
+	return s
+}
+
+func (s *statement) materialize() string {
+	return s.String()
 }

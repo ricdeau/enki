@@ -2,48 +2,72 @@ package enki
 
 import (
 	"strings"
-	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
-func TestNewFunction(t *testing.T) {
-	s := NewFunction()
-	require.NotNil(t, s.inner)
-	require.NoError(t, s.err)
+// Function builder for free functions
+type Function interface {
+	Block
+	Name(name string) Function
+	Params(params ...string) Function
+	Returns(results ...string) Function
+	Body(body ...Statement) Function
+}
+
+// Method builder for method
+type Method interface {
+	Function
+	Receiver(def string) Method
 }
 
 type functionBuilder struct {
-	*statementBuilder
+	*statement
+	isDef    bool
 	name     string
 	receiver string
 	params   []string
 	returns  []string
-	body     func(def Statement)
+	body     []Statement
 }
 
-// NewFunction creates new function builder
-func NewFunction() *functionBuilder {
-	return &functionBuilder{statementBuilder: NewStatement()}
+// F creates new function.
+func F(name string) Function {
+	return &functionBuilder{
+		statement: Stmt(),
+		name:      name,
+	}
 }
 
-func (fb *functionBuilder) Name(name string) FunctionDef {
+// Def creates interface method definition.
+func Def(name string) Function {
+	return &functionBuilder{
+		statement: Stmt(),
+		name:      name,
+		isDef:     true,
+	}
+}
+
+// M creates new method.
+func M(name string) Method {
+	return F(name).(Method)
+}
+
+func (fb *functionBuilder) Name(name string) Function {
 	fb.name = name
 	return fb
 }
 
-func (fb *functionBuilder) Params(params ...string) FunctionDef {
+func (fb *functionBuilder) Params(params ...string) Function {
 	fb.params = params
 	return fb
 }
 
-func (fb *functionBuilder) Returns(results ...string) FunctionDef {
+func (fb *functionBuilder) Returns(results ...string) Function {
 	fb.returns = results
 	return fb
 }
 
-func (fb *functionBuilder) Body(def func(sb Statement)) Function {
-	fb.body = def
+func (fb *functionBuilder) Body(body ...Statement) Function {
+	fb.body = body
 	return fb
 }
 
@@ -52,9 +76,9 @@ func (fb *functionBuilder) Receiver(def string) Method {
 	return fb
 }
 
-func (fb *functionBuilder) Materialize() {
-	if fb.Err() != nil {
-		return
+func (fb *functionBuilder) materialize() string {
+	if fb.err != nil {
+		return ""
 	}
 	var openBracket, closeBracket string
 	if fb.body != nil {
@@ -64,15 +88,23 @@ func (fb *functionBuilder) Materialize() {
 	params := fb.materializeParams()
 	returns := fb.materializeReturns()
 	// func<receiver><name><params><returns><openBracket?>
-	fb.Line("func@1 @2@3@4@5", receiver, fb.name, params, returns, openBracket)
+	if fb.isDef {
+		fb.Line("@1@2@3", fb.name, params, returns)
+	} else {
+		fb.Line("func@1 @2@3@4@5", receiver, fb.name, params, returns, openBracket)
+	}
 	if fb.body != nil {
-		fb.body(fb)
+		for _, stmt := range fb.body {
+			fb.Print(stmt.materialize())
+		}
 		fb.Line(closeBracket)
 	}
+
+	return fb.statement.materialize()
 }
 
 func (fb *functionBuilder) String() string {
-	return fb.statementBuilder.String()
+	return fb.statement.String()
 }
 
 func (fb *functionBuilder) materializeReturns() (result string) {
@@ -98,12 +130,4 @@ func (fb *functionBuilder) materializeReceiver() string {
 		return ""
 	}
 	return " (" + fb.receiver + ")"
-}
-
-func (fb *functionBuilder) reset() {
-	fb.name = ""
-	fb.receiver = ""
-	fb.params = nil
-	fb.returns = nil
-	fb.body = nil
 }

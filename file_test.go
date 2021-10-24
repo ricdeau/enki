@@ -6,48 +6,59 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	Int     = "int"
+	Str     = "string"
+	Float32 = "float32"
+	Float64 = "float64"
+)
+
 func TestNewFile(t *testing.T) {
 	s := NewFile()
+	require.NotNil(t, s)
+	require.NotNil(t, s.statement)
 	require.NotNil(t, s.inner)
-	require.NoError(t, s.err)
 }
 
 func Test_fileBuilder_WriteNew(t *testing.T) {
 	f := NewFile()
 	f.Package("enki")
 	f.GeneratedBy("enki")
-	f.AddImport("", "fmt")
+	f.Import("", "fmt")
 	f.Line("// Number type redefined")
-	f.Type("Number").Is(Int).Materialize()
+
+	f.Add(T("Number").Is(Int))
 	f.NewLine()
-	f.Type("NumStruct").Struct(func(s Statement) {
-		s.Line("a, b " + Int)
-	}).Materialize()
+
+	f.Add(T("NumStruct").Struct(
+		Field("a, b " + Int),
+	))
 	f.NewLine()
-	f.Type("Num").Interface(Methods{
-		func(f FunctionDef) {
-			f.Name("AsNumber").Returns(Str)
-		},
-		func(f FunctionDef) {
-			f.Name("Sum").Params(Int).Returns(Int)
-		},
-	}).Materialize()
+
+	f.Add(T("Num").Interface(
+		Def("AsNumber").Returns(Str),
+		Def("Sum").Params(Int).Returns(Int),
+	))
 	f.NewLine()
-	f.Function("AsNumber").Returns(Str).(Method).Receiver("n Number").Body(func(sb Statement) {
-		sb.Line("return fmt.Sprint(n)")
-	}).Materialize()
+
+	f.Add(M("AsNumber").Receiver("n Number").Body(
+		Stmt().Line("return fmt.Sprint(n)"),
+	).Returns(Str))
 	f.NewLine()
-	f.Function("Sum").Params("x int").Returns(Int).(Method).Receiver("n Number").Body(func(sb Statement) {
-		sb.Line("return int(n) + x")
-	}).Materialize()
+
+	f.Add(M("Sum").Receiver("n Number").Params("x int").Body(
+		Stmt().Line("return int(n) + x"),
+	).Returns(Int))
 	f.NewLine()
-	f.Function("Sum").Returns(Int).(Method).Receiver("ns NumStruct").Body(func(sb Statement) {
-		sb.Line("return ns.a + ns.b")
-	}).Materialize()
+
+	f.Add(M("Sum").Receiver("ns NumStruct").Body(
+		Stmt().Line("return ns.a + ns.b"),
+	).Returns(Int))
 	f.NewLine()
-	f.Function("sum").Params("a, b " + Float32).Returns("s " + Float64).(Function).Body(func(sb Statement) {
-		sb.Line("return @1(a + b)", Float64)
-	}).Materialize()
+
+	f.Add(F("sum").Params("a, b " + Float32).Body(
+		Stmt().Line("return @1(a + b)", Float64),
+	).Returns("s " + Float64))
 
 	err := f.Create("file.gen.go")
 	require.NoError(t, err)

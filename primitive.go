@@ -4,6 +4,11 @@ import (
 	"strings"
 )
 
+// Primitive primitive builder
+type Primitive interface {
+	NewLine()
+}
+
 type primitiveBuilder struct {
 	inner *strings.Builder
 	err   error
@@ -19,10 +24,6 @@ func (pb *primitiveBuilder) NewLine() {
 	if err != nil {
 		pb.err = err
 	}
-}
-
-func (pb *primitiveBuilder) Err() error {
-	return pb.err
 }
 
 func (pb *primitiveBuilder) String() string {

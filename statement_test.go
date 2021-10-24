@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewStatement(t *testing.T) {
-	s := NewStatement()
+	s := Stmt()
 	require.NotNil(t, s.inner)
 	require.NoError(t, s.err)
 }
@@ -37,14 +37,14 @@ func Test_statementBuilder_Line(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sb := NewStatement()
+			sb := Stmt()
 			sb.Line(tt.input, tt.args...)
 			got := sb.String()
-			if (sb.Err() != nil) != tt.wantErr {
-				t.Errorf("Line() want wantErr = %v, but got %v", tt.wantErr, sb.Err())
+			if (sb.err != nil) != tt.wantErr {
+				t.Errorf("Line() want wantErr = %v, but typeDef %v", tt.wantErr, sb.err)
 			}
-			if sb.Err() != nil {
-				t.Log(sb.Err())
+			if sb.err != nil {
+				t.Log(sb.err)
 			} else {
 				require.Equal(t, tt.want, got)
 				source, err := format.Source([]byte(got))

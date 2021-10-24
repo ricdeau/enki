@@ -13,7 +13,7 @@ func TestFunction(t *testing.T) {
 		receiver string
 		params   []string
 		returns  []string
-		body     func(statement Statement)
+		body     []Statement
 	}
 	tests := []struct {
 		name string
@@ -27,8 +27,8 @@ func TestFunction(t *testing.T) {
 				receiver: "s SomeStruct",
 				params:   []string{"a int", "b string"},
 				returns:  []string{"res interface{}", "err error"},
-				body: func(s Statement) {
-					s.Line("return fmt.Sprint(a) + b, nil")
+				body: []Statement{
+					Stmt().Line("return fmt.Sprint(a) + b, nil"),
 				},
 			},
 			want: "func (s SomeStruct) SomeFunc(a int, b string) (res interface{}, err error) {\nreturn fmt.Sprint(a) + b, nil\n}\n",
@@ -39,9 +39,9 @@ func TestFunction(t *testing.T) {
 				name:    "SomeFunc",
 				params:  []string{"a int", "b string"},
 				returns: []string{"error"},
-				body: func(s Statement) {
-					s.Line("fmt.Print(b)")
-					s.Line("return nil")
+				body: []Statement{
+					Stmt().Line("fmt.Print(b)"),
+					Stmt().Line("return nil"),
 				},
 			},
 			want: "func SomeFunc(a int, b string) error {\nfmt.Print(b)\nreturn nil\n}\n",
@@ -58,11 +58,8 @@ func TestFunction(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			builder := NewFunction().Name(tt.def.name).Params(tt.def.params...).Returns(tt.def.returns...).(Method).
-				Receiver(tt.def.receiver).
-				Body(tt.def.body)
-			builder.Materialize()
-			got := builder.String()
+			builder := M(tt.def.name).Receiver(tt.def.receiver).Params(tt.def.params...).Body(tt.def.body...).Returns(tt.def.returns...)
+			got := builder.materialize()
 			require.Equal(t, tt.want, got)
 			source, err := format.Source([]byte(got))
 			require.NoError(t, err)

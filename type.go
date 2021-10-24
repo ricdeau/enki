@@ -1,16 +1,28 @@
 package enki
 
-type typeBuilder struct {
-	*functionBuilder
-	name    string
-	is      string
-	fields  func(Statement)
-	methods Methods
+// Type builder for types and interfaces
+type Type interface {
+	Block
+	Name(name string) Type
+	Is(anotherType string) Type
+	Struct(fields ...Statement) Type
+	Interface(methods ...Function) Type
 }
 
-// NewType creates new type builder
-func NewType() *typeBuilder {
-	return &typeBuilder{functionBuilder: NewFunction()}
+type typeBuilder struct {
+	*statement
+	name    string
+	is      string
+	fields  []Statement
+	methods []Function
+}
+
+// T creates new type builder
+func T(name string) *typeBuilder {
+	return &typeBuilder{
+		name:      name,
+		statement: Stmt(),
+	}
 }
 
 func (tb *typeBuilder) Name(name string) Type {
@@ -23,47 +35,40 @@ func (tb *typeBuilder) Is(anotherType string) Type {
 	return tb
 }
 
-func (tb *typeBuilder) Struct(fields func(Statement)) Type {
+func (tb *typeBuilder) Struct(fields ...Statement) Type {
 	tb.fields = fields
 	return tb
 }
 
-func (tb *typeBuilder) Interface(methods Methods) Type {
+func (tb *typeBuilder) Interface(methods ...Function) Type {
 	tb.methods = methods
 	return tb
 }
 
-func (tb *typeBuilder) Materialize() {
-	if tb.Err() != nil {
-		return
+func (tb *typeBuilder) materialize() string {
+	if tb.err != nil {
+		return ""
 	}
 	switch {
 	case tb.fields != nil:
 		tb.Line("type @1 struct {", tb.name)
-		tb.fields(tb)
+		for _, field := range tb.fields {
+			tb.Print(field.materialize())
+		}
 		tb.Line("}")
 	case len(tb.methods) > 0:
 		tb.Line("type @1 interface {", tb.name)
 		for _, method := range tb.methods {
-			method(tb.functionBuilder)
-			tb.Line("@1@2@3", tb.functionBuilder.name, tb.materializeParams(), tb.materializeReturns())
-			tb.functionBuilder.reset()
+			tb.Print(method.materialize())
 		}
 		tb.Line("}")
 	default:
 		tb.Line("type @1 @2", tb.name, tb.is)
 	}
-	tb.reset()
+
+	return tb.String()
 }
 
 func (tb *typeBuilder) String() string {
-	return tb.functionBuilder.String()
-}
-
-func (tb *typeBuilder) reset() {
-	tb.name = ""
-	tb.is = ""
-	tb.fields = nil
-	tb.methods = nil
-	tb.functionBuilder.reset()
+	return tb.statement.String()
 }

@@ -8,47 +8,42 @@ import (
 )
 
 func TestNewType(t *testing.T) {
-	s := NewType()
+	s := T("")
 	require.NotNil(t, s.inner)
 	require.NoError(t, s.err)
 }
 
 func Test_typeBuilder_String(t *testing.T) {
 	tests := []struct {
-		name string
-		got  Type
-		want string
+		name    string
+		typeDef Type
+		want    string
 	}{
 		{
-			name: "another type",
-			got:  NewType().Name("SomeStruct").Is("string"),
-			want: "type SomeStruct string\n",
+			name:    "another type",
+			typeDef: T("SomeStruct").Is("string"),
+			want:    "type SomeStruct string\n",
 		},
 		{
 			name: "struct",
-			got: NewType().Name("SomeStruct").Struct(func(s Statement) {
-				s.Line("id string")
-				s.Line("Time time.Time")
-			}),
+			typeDef: T("SomeStruct").Struct(
+				Field("id string"),
+				Field("Time time.Time"),
+			),
 			want: "type SomeStruct struct {\nid string\nTime time.Time\n}\n",
 		},
 		{
 			name: "interface",
-			got: NewType().Name("SomeStruct").Interface(Methods{
-				func(f FunctionDef) {
-					f.Name("GetId").Returns("string")
-				},
-				func(f FunctionDef) {
-					f.Name("SetId").Params("id string")
-				},
-			}),
+			typeDef: T("SomeStruct").Interface(
+				Def("GetId").Returns("string"),
+				Def("SetId").Params("id string"),
+			),
 			want: "type SomeStruct interface {\nGetId() string\nSetId(id string)\n}\n",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.got.Materialize()
-			got := tt.got.String()
+			got := tt.typeDef.materialize()
 			require.Equal(t, tt.want, got)
 			source, err := format.Source([]byte(got))
 			require.NoError(t, err)

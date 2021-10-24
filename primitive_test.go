@@ -16,7 +16,7 @@ func TestNewPrimitive(t *testing.T) {
 func Test_primitiveBuilder_Err(t *testing.T) {
 	p := NewPrimitive()
 	p.err = io.EOF
-	require.Error(t, p.Err())
+	require.Error(t, p.err)
 }
 
 func Test_primitiveBuilder_NewLine(t *testing.T) {
