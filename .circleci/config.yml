@@ -18,6 +18,7 @@ jobs:
           failfast: true
           race: true
           coverprofile: coverage.html
+      - run: ls -l
 workflows:
   main:
     jobs:
