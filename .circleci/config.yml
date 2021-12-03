@@ -20,7 +20,7 @@ jobs:
           coverprofile: coverage.html
       - run: ls -l
       - codecov/upload:
-          file: coverage.html
+          file: ./coverage.html
 workflows:
   main:
     jobs:
