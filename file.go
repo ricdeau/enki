@@ -30,7 +30,7 @@ type file struct {
 	*statement
 	generatedComment string
 	pkg              string
-	imports          []string
+	imports          [][2]string
 	blocks           []Block
 }
 
@@ -50,8 +50,7 @@ func (f *file) Package(pkg string) {
 }
 
 func (f *file) Import(alias, path string) {
-	def := alias + " " + path
-	f.imports = append(f.imports, def)
+	f.imports = append(f.imports, [2]string{alias, path})
 }
 
 func (f *file) Add(b Block) {
@@ -83,7 +82,7 @@ func (f *file) Write(dest io.Writer) error {
 	if len(f.imports) > 0 {
 		f.statement.Line("import (")
 		for _, s := range f.imports {
-			f.statement.Line(`"@1"`, strings.Trim(s, " "))
+			f.statement.Line(`@1 "@2"`, s[0], strings.Trim(s[1], " "))
 		}
 		f.statement.Line(")")
 	}

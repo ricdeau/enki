@@ -1,6 +1,7 @@
 package enki
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -24,7 +25,7 @@ func Test_fileBuilder_WriteNew(t *testing.T) {
 	f := NewFile()
 	f.Package("enki")
 	f.GeneratedBy("enki")
-	f.Import("", "fmt")
+	f.Import(".", "fmt")
 	f.Line("// Number type redefined")
 
 	f.Add(T("Number").Is(Int))
@@ -42,7 +43,7 @@ func Test_fileBuilder_WriteNew(t *testing.T) {
 	f.NewLine()
 
 	f.Add(M("AsNumber").Receiver("n Number").Body(
-		Stmt().Line("return fmt.Sprint(n)"),
+		Stmt().Line("return Sprint(n)"),
 	).Returns(Str))
 	f.NewLine()
 
@@ -60,6 +61,11 @@ func Test_fileBuilder_WriteNew(t *testing.T) {
 		Stmt().Line("return @1(a + b)", Float64),
 	).Returns("s " + Float64))
 
-	err := f.Create("file.gen.go")
+	buf := &bytes.Buffer{}
+
+	err := f.Write(buf)
+
 	require.NoError(t, err)
+
+	t.Log(buf.String())
 }
