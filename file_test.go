@@ -2,6 +2,7 @@ package enki
 
 import (
 	"bytes"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -21,7 +22,7 @@ func TestNewFile(t *testing.T) {
 	require.NotNil(t, s.inner)
 }
 
-func Test_fileBuilder_WriteNew(t *testing.T) {
+func TestFileCreate(t *testing.T) {
 	f := NewFile()
 	f.Package("enki")
 	f.GeneratedBy("enki")
@@ -61,11 +62,60 @@ func Test_fileBuilder_WriteNew(t *testing.T) {
 		Stmt().Line("return @1(a + b)", Float64),
 	).Returns("s " + Float64))
 
-	buf := &bytes.Buffer{}
-
-	err := f.Write(buf)
+	err := f.Create("file.gen.go")
 
 	require.NoError(t, err)
+}
 
-	t.Log(buf.String())
+type errWriter struct{}
+
+func (e errWriter) Write(_ []byte) (n int, err error) {
+	return 0, io.EOF
+}
+
+func TestFile_Write(t *testing.T) {
+	tests := []struct {
+		name    string
+		file    func() File
+		dest    io.Writer
+		wantErr bool
+	}{
+		{
+			name: "success",
+			file: func() File {
+				f := NewFile()
+				f.Package("pkg")
+				return f
+			},
+			dest:    bytes.NewBufferString(""),
+			wantErr: false,
+		},
+		{
+			name: "error format",
+			file: func() File {
+				f := NewFile()
+				return f
+			},
+			dest:    bytes.NewBufferString(""),
+			wantErr: true,
+		},
+		{
+			name: "error write",
+			file: func() File {
+				f := NewFile()
+				f.Package("pkg")
+				return f
+			},
+			dest:    errWriter{},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.file().Write(tt.dest); (err != nil) != tt.wantErr {
+				t.Errorf("wantErr = %v but go %v", tt.wantErr, err)
+			}
+		})
+	}
 }

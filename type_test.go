@@ -2,6 +2,7 @@ package enki
 
 import (
 	"go/format"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,6 +15,7 @@ func TestNewType(t *testing.T) {
 }
 
 func Test_typeBuilder_String(t *testing.T) {
+	withErr := &typeBuilder{statement: &statement{primitiveBuilder: &primitiveBuilder{err: io.EOF}}}
 	tests := []struct {
 		name    string
 		typeDef Type
@@ -22,6 +24,11 @@ func Test_typeBuilder_String(t *testing.T) {
 		{
 			name:    "another type",
 			typeDef: T("SomeStruct").Is("string"),
+			want:    "type SomeStruct string\n",
+		},
+		{
+			name:    "new name",
+			typeDef: T("").Name("SomeStruct").Is("string"),
 			want:    "type SomeStruct string\n",
 		},
 		{
@@ -39,6 +46,11 @@ func Test_typeBuilder_String(t *testing.T) {
 				Def("SetId").Params("id string"),
 			),
 			want: "type SomeStruct interface {\nGetId() string\nSetId(id string)\n}\n",
+		},
+		{
+			name:    "empty if error",
+			typeDef: withErr.Name("A").Is("B"),
+			want:    "",
 		},
 	}
 	for _, tt := range tests {
