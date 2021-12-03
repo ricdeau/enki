@@ -19,11 +19,11 @@ jobs:
           race: true
           coverprofile: coverage.html
       - run: ls -l
+      - codecov/upload:
+          file: coverage.html
 workflows:
   main:
     jobs:
-      - test:
-          post-steps:
-            - codecov/upload:
-                file: coverage.html
+      - test
+
 
