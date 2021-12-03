@@ -17,10 +17,12 @@ jobs:
           covermode: atomic
           failfast: true
           race: true
+          coverprofile: coverage.html
 workflows:
   main:
     jobs:
       - test:
           post-steps:
-            - codecov/upload
+            - codecov/upload:
+                file: coverage.html
 
