@@ -27,6 +27,12 @@ func TestFileCreate(t *testing.T) {
 	f.Package("enki")
 	f.GeneratedBy("enki")
 	f.Import(".", "fmt")
+	f.Import("", "sync")
+
+	f.Consts(Field(`DEF = "default"`))
+
+	f.Vars(Field(`wg sync.WaitGroup`))
+
 	f.Line("// Number type redefined")
 
 	f.Add(T("Number").Is(Int))
@@ -44,6 +50,8 @@ func TestFileCreate(t *testing.T) {
 	f.NewLine()
 
 	f.Add(M("AsNumber").Receiver("n Number").Body(
+		Stmt().Line("wg.Add(1)"),
+		Stmt().Line("defer wg.Done()"),
 		Stmt().Line("return Sprint(n)"),
 	).Returns(Str))
 	f.NewLine()
@@ -62,7 +70,7 @@ func TestFileCreate(t *testing.T) {
 		Stmt().Line("return @1(a + b)", Float64),
 	).Returns("s " + Float64))
 
-	err := f.Create("file.gen.go")
+	err := f.GoFmt(true).Create("file.gen.go")
 
 	require.NoError(t, err)
 }

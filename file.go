@@ -18,27 +18,39 @@ type Block interface {
 // File builder for files
 type File interface {
 	Statement
+	GoFmt(enabled bool) File
 	GeneratedBy(tool string)
 	Package(pkg string)
 	Import(alias, path string)
 	Add(b Block)
+	Vars(s ...Statement)
+	Consts(s ...Statement)
 	Write(dest io.Writer) error
 	Create(fileName string) error
 }
 
 type file struct {
 	*statement
+	goFmtEnabled     bool
 	generatedComment string
 	pkg              string
 	imports          [][2]string
 	blocks           []Block
+	vars             []Statement
+	consts           []Statement
 }
 
 // NewFile creates new file.
 func NewFile() *file {
 	return &file{
-		statement: Stmt(),
+		goFmtEnabled: true,
+		statement:    Stmt(),
 	}
+}
+
+func (f *file) GoFmt(enabled bool) File {
+	f.goFmtEnabled = enabled
+	return f
 }
 
 func (f *file) GeneratedBy(tool string) {
@@ -57,6 +69,14 @@ func (f *file) Add(b Block) {
 	f.blocks = append(f.blocks, b)
 }
 
+func (f *file) Vars(s ...Statement) {
+	f.vars = append(f.vars, s...)
+}
+
+func (f *file) Consts(s ...Statement) {
+	f.consts = append(f.consts, s...)
+}
+
 func (f *file) NewLine() {
 	stmt := Stmt()
 	stmt.NewLine()
@@ -68,7 +88,7 @@ func (f *file) Line(s string, args ...interface{}) Statement {
 	return f
 }
 
-func (f *file) Write(dest io.Writer) error {
+func (f *file) Write(dest io.Writer) (err error) {
 	if f.err != nil {
 		return f.err
 	}
@@ -87,18 +107,43 @@ func (f *file) Write(dest io.Writer) error {
 		f.statement.Line(")")
 	}
 
+	f.statement.NewLine()
+
+	if len(f.consts) > 0 {
+		f.statement.Line("const (")
+		for _, s := range f.consts {
+			f.statement.Line(s.materialize())
+		}
+		f.statement.Line(")")
+	}
+
+	f.statement.NewLine()
+
+	if len(f.vars) > 0 {
+		f.statement.Line("var (")
+		for _, s := range f.vars {
+			f.statement.Line(s.materialize())
+		}
+		f.statement.Line(")")
+	}
+
+	f.statement.NewLine()
+
 	buf := bytes.NewBufferString(f.String())
 
 	for _, block := range f.blocks {
 		buf.WriteString(block.materialize())
 	}
 
-	formatted, err := format.Source(buf.Bytes())
-	if err != nil {
-		return errors.Wrap(err, "go fmt file")
+	out := buf.Bytes()
+	if f.goFmtEnabled {
+		out, err = format.Source(out)
+		if err != nil {
+			return errors.Wrap(err, "go fmt file")
+		}
 	}
 
-	_, err = dest.Write(formatted)
+	_, err = dest.Write(out)
 	if err != nil {
 		return errors.Wrap(err, "write to dest")
 	}
