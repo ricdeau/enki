@@ -2,6 +2,7 @@ package enki
 
 import (
 	"go/format"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -16,6 +17,7 @@ func TestNewStatement(t *testing.T) {
 func Test_statementBuilder_Line(t *testing.T) {
 	tests := []struct {
 		name    string
+		hasErr  bool
 		input   string
 		want    string
 		args    []interface{}
@@ -29,15 +31,24 @@ func Test_statementBuilder_Line(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "error",
+			name:    "error invalid arg num",
 			input:   "func @10",
 			args:    []interface{}{"SomeFunc"},
+			wantErr: true,
+		},
+		{
+			name:    "error",
+			hasErr:  true,
+			input:   "func @1",
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sb := Stmt()
+			if tt.hasErr {
+				sb.err = io.EOF
+			}
 			sb.Line(tt.input, tt.args...)
 			got := sb.String()
 			if (sb.err != nil) != tt.wantErr {

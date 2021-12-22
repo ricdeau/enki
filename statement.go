@@ -42,25 +42,14 @@ func (s *statement) Print(line string, args ...interface{}) Statement {
 
 	r := regexp.MustCompile(`@\d+`)
 	result := r.ReplaceAllStringFunc(line, func(sub string) string {
-		if s.err != nil {
-			return sub
-		}
-		d, err := strconv.Atoi(strings.TrimPrefix(sub, "@"))
-		if err != nil {
-			s.err = err
-			return sub
-		}
+		d, _ := strconv.Atoi(strings.TrimPrefix(sub, "@"))
 		if len(args) < d {
 			s.err = fmt.Errorf("%s: found %s substitution parameter, but only %d arguments has been provided", line, sub, len(args))
 			return sub
 		}
 		return fmt.Sprint(args[d-1])
 	})
-	_, err := s.inner.WriteString(result)
-	if err != nil {
-		s.err = err
-		return s
-	}
+	s.inner.WriteString(result)
 
 	return s
 }
