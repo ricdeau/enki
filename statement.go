@@ -11,7 +11,9 @@ import (
 type Statement interface {
 	Primitive
 	Block
+	// Print prints statement to inner buffer.
 	Print(s string, args ...interface{}) Statement
+	// Line add line with args.
 	Line(s string, args ...interface{}) Statement
 }
 

@@ -3,9 +3,13 @@ package enki
 // Type builder for types and interfaces
 type Type interface {
 	Block
+	// Name type name.
 	Name(name string) Type
+	// Is type redeclaration.
 	Is(anotherType string) Type
+	// Struct type as struct.
 	Struct(fields ...Statement) Type
+	// Interface type as interface.
 	Interface(methods ...Function) Type
 }
 

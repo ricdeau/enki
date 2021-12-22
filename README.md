@@ -11,47 +11,69 @@
 ## Example
 
 ```go
+package main
+
+import (
+	"os"
+	"github.com/ricdeau/enki"
+)
+
+const (
+	Int     = "int"
+	Str     = "string"
+	Float32 = "float32"
+	Float64 = "float64"
+)
+
 func main() {
-    f := NewFile()
+    f := enki.NewFile()
     f.Package("enki")
     f.GeneratedBy("enki")
-    f.Import("", "fmt")
+    f.Import(".", "fmt")
+    f.Import("", "sync")
+    
+    f.Consts(enki.Field(`DEF = "default"`))
+    
+    f.Vars(enki.Field(`wg sync.WaitGroup`))
+    
     f.Line("// Number type redefined")
     
-    f.Add(T("Number").Is(Int))
+    f.Add(enki.T("Number").Is(Int))
     f.NewLine()
     
-    f.Add(T("NumStruct").Struct(
-        Field("a, b " + Int),
+    f.Add(enki.T("NumStruct").Struct(
+		enki.Field("a, b " + Int),
     ))
     f.NewLine()
     
-    f.Add(T("Num").Interface(
-        Def("AsNumber").Returns(Str),
-        Def("Sum").Params(Int).Returns(Int),
+    f.Add(enki.T("Num").Interface(
+        enki.Def("AsNumber").Returns(Str),
+        enki.Def("Sum").Params(Int).Returns(Int),
     ))
     f.NewLine()
     
-    f.Add(M("AsNumber").Receiver("n Number").Body(
-        Stmt().Line("return fmt.Sprint(n)"),
+    f.Add(enki.M("AsNumber").Receiver("n Number").Body(
+        enki.Stmt().Line("wg.Add(1)"),
+        enki.Stmt().Line("defer wg.Done()"),
+        enki.Stmt().Line("return Sprint(n)"),
     ).Returns(Str))
     f.NewLine()
     
-    f.Add(M("Sum").Receiver("n Number").Params("x int").Body(
-        Stmt().Line("return int(n) + x"),
+    f.Add(enki.M("Sum").Receiver("n Number").Params("x int").Body(
+		enki.Stmt().Line("return int(n) + x"),
     ).Returns(Int))
     f.NewLine()
     
-    f.Add(M("Sum").Receiver("ns NumStruct").Body(
-        Stmt().Line("return ns.a + ns.b"),
+    f.Add(enki.M("Sum").Receiver("ns NumStruct").Body(
+		enki.Stmt().Line("return ns.a + ns.b"),
     ).Returns(Int))
     f.NewLine()
     
-    f.Add(F("sum").Params("a, b " + Float32).Body(
-        Stmt().Line("return @1(a + b)", Float64),
+    f.Add(enki.F("sum").Params("a, b " + Float32).Body(
+		enki.Stmt().Line("return @1(a + b)", Float64),
     ).Returns("s " + Float64))
-
-    _ = f.Write(os.Stdout)
+    
+    _ = f.GoFmt(true).Write(os.Stdout)
 }
 ```
 
@@ -61,7 +83,16 @@ Output:
 package enki
 
 import (
-	"fmt"
+	. "fmt"
+	"sync"
+)
+
+const (
+	DEF = "default"
+)
+
+var (
+	wg sync.WaitGroup
 )
 
 // Number type redefined
@@ -77,7 +108,9 @@ type Num interface {
 }
 
 func (n Number) AsNumber() string {
-	return fmt.Sprint(n)
+	wg.Add(1)
+	defer wg.Done()
+	return Sprint(n)
 }
 
 func (n Number) Sum(x int) int {

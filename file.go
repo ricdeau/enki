@@ -18,14 +18,23 @@ type Block interface {
 // File builder for files
 type File interface {
 	Statement
+	// GoFmt manage go-fmt before write file. By default, it is enabled.
 	GoFmt(enabled bool) File
+	// GeneratedBy add special comment to identify generated file.
 	GeneratedBy(tool string)
+	// Package add this file package name.
 	Package(pkg string)
+	// Import add import with optional alias.
 	Import(alias, path string)
+	// Add add a code block.
 	Add(b Block)
+	// Vars add vars to `var` block.
 	Vars(s ...Statement)
+	// Consts add consts to `const` block.
 	Consts(s ...Statement)
+	// Write write output or dest io.Writer.
 	Write(dest io.Writer) error
+	// Create create new file or rewrite existing.
 	Create(fileName string) error
 }
 

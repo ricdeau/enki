@@ -7,15 +7,20 @@ import (
 // Function builder for free functions
 type Function interface {
 	Block
+	// Name function name.
 	Name(name string) Function
+	// Params function params.
 	Params(params ...string) Function
+	// Returns function return values.
 	Returns(results ...string) Function
+	// Body function body.
 	Body(body ...Statement) Function
 }
 
 // Method builder for method
 type Method interface {
 	Function
+	// Receiver method receiver.
 	Receiver(def string) Method
 }
 

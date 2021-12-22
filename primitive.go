@@ -6,6 +6,7 @@ import (
 
 // Primitive primitive builder
 type Primitive interface {
+	// NewLine add new empty line.
 	NewLine()
 }
 
@@ -19,6 +20,7 @@ func NewPrimitive() *primitiveBuilder {
 	return &primitiveBuilder{inner: &strings.Builder{}}
 }
 
+// NewLine add new empty line.
 func (pb *primitiveBuilder) NewLine() {
 	_, err := pb.inner.WriteString("\n")
 	if err != nil {
