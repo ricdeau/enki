@@ -9,6 +9,7 @@ import (
 
 // Statement builder, that can build any statement.
 type Statement interface {
+	fmt.Stringer
 	Block
 	// Print prints statement to inner buffer.
 	Print(s string, args ...interface{}) Statement
