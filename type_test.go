@@ -15,7 +15,9 @@ func TestNewType(t *testing.T) {
 }
 
 func Test_typeBuilder_String(t *testing.T) {
-	withErr := &typeBuilder{statement: &statement{primitiveBuilder: &primitiveBuilder{err: io.EOF}}}
+	withErr := &typeBuilder{statement: Stmt()}
+	withErr.err = io.EOF
+
 	tests := []struct {
 		name    string
 		typeDef Type

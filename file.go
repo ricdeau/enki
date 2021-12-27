@@ -38,6 +38,8 @@ type File interface {
 	Create(fileName string) error
 }
 
+var _ File = &file{}
+
 type file struct {
 	*statement
 	goFmtEnabled     bool
@@ -86,10 +88,12 @@ func (f *file) Consts(s ...Statement) {
 	f.consts = append(f.consts, s...)
 }
 
-func (f *file) NewLine() {
+func (f *file) NewLine() Statement {
 	stmt := Stmt()
 	stmt.NewLine()
 	f.blocks = append(f.blocks, stmt)
+
+	return f
 }
 
 func (f *file) Line(s string, args ...interface{}) Statement {

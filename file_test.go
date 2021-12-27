@@ -3,7 +3,6 @@ package enki
 import (
 	"bytes"
 	"io"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -71,11 +70,9 @@ func TestFileCreate(t *testing.T) {
 		Stmt().Line("return @1(a + b)", Float64),
 	).Returns("s " + Float64))
 
-	_ = f.GoFmt(true).Write(os.Stdout)
+	err := f.GoFmt(true).Create("file.gen.go")
 
-	// err := f.GoFmt(true).Create("file.gen.go")
-	//
-	// require.NoError(t, err)
+	require.NoError(t, err)
 }
 
 type errWriter struct{}
