@@ -66,6 +66,8 @@ func (tb *typeBuilder) materialize() string {
 			tb.Print(method.materialize())
 		}
 		tb.Line("}")
+	case len(tb.fields) == 0 && tb.is == "":
+		tb.Line("type @1 struct {}", tb.name)
 	default:
 		tb.Line("type @1 @2", tb.name, tb.is)
 	}

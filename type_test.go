@@ -42,6 +42,11 @@ func Test_typeBuilder_String(t *testing.T) {
 			want: "type SomeStruct struct {\nid string\nTime time.Time\n}\n",
 		},
 		{
+			name:    "empty struct",
+			typeDef: T("SomeStruct"),
+			want:    "type SomeStruct struct {}\n",
+		},
+		{
 			name: "interface",
 			typeDef: T("SomeStruct").Interface(
 				Def("GetId").Returns("string"),
