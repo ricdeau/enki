@@ -70,7 +70,7 @@ func TestFileCreate(t *testing.T) {
 		Stmt().Line("return @1(a + b)", Float64),
 	).Returns("s " + Float64))
 
-	err := f.GoFmt(true).Create("file.gen.go")
+	err := f.GoFmt(true).GoImports(true).Create("file.gen.go")
 
 	require.NoError(t, err)
 }

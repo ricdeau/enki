@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"golang.org/x/tools/imports"
 )
 
 // Block builder that can be materialized
@@ -20,6 +21,8 @@ type File interface {
 	Statement
 	// GoFmt manage go-fmt before write file. By default, it is enabled.
 	GoFmt(enabled bool) File
+	// GoImports formats and adjusts imports for the provided file. By default, it is disabled.
+	GoImports(enabled bool) File
 	// GeneratedBy add special comment to identify generated file.
 	GeneratedBy(tool string)
 	// Package add this file package name.
@@ -32,6 +35,8 @@ type File interface {
 	Vars(s ...Statement)
 	// Consts add consts to `const` block.
 	Consts(s ...Statement)
+	// Output file as raw bytes.
+	Output() ([]byte, error)
 	// Write write output or dest io.Writer.
 	Write(dest io.Writer) error
 	// Create create new file or rewrite existing.
@@ -43,6 +48,7 @@ var _ File = &file{}
 type file struct {
 	*statement
 	goFmtEnabled     bool
+	goImportsEnabled bool
 	generatedComment string
 	pkg              string
 	imports          [][2]string
@@ -61,6 +67,11 @@ func NewFile() *file {
 
 func (f *file) GoFmt(enabled bool) File {
 	f.goFmtEnabled = enabled
+	return f
+}
+
+func (f *file) GoImports(enabled bool) File {
+	f.goImportsEnabled = enabled
 	return f
 }
 
@@ -101,9 +112,9 @@ func (f *file) Line(s string, args ...interface{}) Statement {
 	return f
 }
 
-func (f *file) Write(dest io.Writer) (err error) {
+func (f *file) Output() (rawOut []byte, err error) {
 	if f.err != nil {
-		return f.err
+		return nil, f.err
 	}
 
 	if f.generatedComment != "" {
@@ -148,15 +159,23 @@ func (f *file) Write(dest io.Writer) (err error) {
 		buf.WriteString(block.materialize())
 	}
 
-	out := buf.Bytes()
+	return buf.Bytes(), nil
+}
+
+func (f *file) Write(dest io.Writer) (err error) {
+	output, err := f.Output()
+	if err != nil {
+		return errors.Wrap(err, "make file's output")
+	}
+
 	if f.goFmtEnabled {
-		out, err = format.Source(out)
+		output, err = format.Source(output)
 		if err != nil {
 			return errors.Wrap(err, "go fmt file")
 		}
 	}
 
-	_, err = dest.Write(out)
+	_, err = dest.Write(output)
 	if err != nil {
 		return errors.Wrap(err, "write to dest")
 	}
@@ -165,13 +184,34 @@ func (f *file) Write(dest io.Writer) (err error) {
 }
 
 func (f *file) Create(fileName string) error {
-	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	output, err := f.Output()
+	if err != nil {
+		return errors.Wrap(err, "make file's output")
+	}
+
+	if f.goFmtEnabled {
+		output, err = format.Source(output)
+		if err != nil {
+			return errors.Wrap(err, "go fmt file")
+		}
+	}
+
+	if f.goImportsEnabled {
+		output, err = imports.Process(fileName, output, nil)
+		if err != nil {
+			return errors.Wrap(err, "process go imports")
+		}
+	}
+
+	out, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return errors.Wrap(err, "create file")
 	}
-	defer file.Close()
-	if err = f.Write(file); err != nil {
+	defer out.Close()
+
+	if _, err = out.Write(output); err != nil {
 		return errors.Wrap(err, "write")
 	}
+
 	return nil
 }
