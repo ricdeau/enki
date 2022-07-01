@@ -102,6 +102,7 @@ func TestFile_Write(t *testing.T) {
 			name: "error format",
 			file: func() File {
 				f := NewFile()
+				f.Package(`"error"`)
 				return f
 			},
 			dest:    bytes.NewBufferString(""),
@@ -121,8 +122,12 @@ func TestFile_Write(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.file().Write(tt.dest); (err != nil) != tt.wantErr {
+			err := tt.file().Write(tt.dest)
+			if (err != nil) != tt.wantErr {
 				t.Errorf("wantErr = %v but go %v", tt.wantErr, err)
+			}
+			if tt.wantErr {
+				t.Log(err)
 			}
 		})
 	}
