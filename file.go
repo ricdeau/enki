@@ -121,7 +121,9 @@ func (f *file) Output() (rawOut []byte, err error) {
 		f.statement.Line(f.generatedComment)
 	}
 
-	f.statement.Line("package @1", f.pkg)
+	if f.pkg != "" {
+		f.statement.Line("package @1", f.pkg)
+	}
 
 	if len(f.imports) > 0 {
 		f.statement.Line("import (")
